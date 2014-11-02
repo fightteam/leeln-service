@@ -1,0 +1,81 @@
+apply plugin: "base"
+apply plugin: "java"
+buildscript {
+	repositories {
+        //mavenLocal()
+        mavenCentral()
+		maven { url "https://repo.spring.io/plugins-release" }
+		maven { url "http://gradle.artifactoryonline.com/gradle/libs" }
+
+	}
+	dependencies {
+		classpath("org.springframework.build.gradle:spring-io-plugin:0.0.3.RELEASE")
+		classpath("org.springframework.build.gradle:propdeps-plugin:0.0.7")
+        classpath("org.gradle.api.plugins:gradle-tomcat-plugin:1.2.3")
+	    classpath('me.champeau.gradle:gradle-javadoc-hotfix-plugin:0.1')
+		classpath("ws.antonov.gradle.plugins:gradle-plugin-protobuf:0.9.1")
+		classpath('org.asciidoctor:asciidoctor-gradle-plugin:0.7.0')
+        classpath('org.asciidoctor:asciidoctor-java-integration:0.1.4.preview.1')
+	}
+}
+
+
+group = "org.fightteam.leeln"
+
+ext.JAVA_GRADLE = "$rootDir/gradle/java.gradle"
+ext.MAVEN_GRADLE = "$rootDir/gradle/publish-maven.gradle"
+ext.TOMCAT_GRADLE = "$rootDir/gradle/tomcat.gradle"
+ext.IDE_GRADLE = "$rootDir/gradle/ide.gradle"
+ext.SONAR_GRADLE = "$rootDir/gradle/sonar.gradle"
+
+
+
+
+
+// Set up different subproject lists for individual configuration
+ext.javaProjects = subprojects.findAll {
+    project -> project.name != 'docs' && project.name != 'manual' && project.name != 'guides'
+}
+
+ext.releaseBuild = version.endsWith('RELEASE')
+ext.snapshotBuild = version.endsWith('SNAPSHOT')
+
+apply from: IDE_GRADLE
+apply from: SONAR_GRADLE
+
+// Task for creating the distro zip
+
+task dist(type: Zip) {
+    dependsOn subprojects*.tasks*.matching { task -> task.name == 'assemble' || task.name.endsWith('Zip') || task.name.endsWith('generatePom') }
+    classifier = 'dist'
+
+    evaluationDependsOn(':docs')
+    evaluationDependsOn(':docs:manual')
+
+    def zipRootDir = "${project.name}-$version"
+    into(zipRootDir) {
+        from(rootDir) {
+            include '*.txt'
+        }
+        into('docs') {
+            with(project(':docs').apiSpec)
+            with(project(':docs:manual').spec)
+            with(project(':docs:guides').spec)
+        }
+        into('dist') {
+            from javaProjects.collect {project -> project.libsDir }
+        }
+
+    }
+}
+
+artifacts {
+    archives dist
+    archives project(':docs').docsZip
+    archives project(':docs').schemaZip
+}
+
+
+task wrapper(type: Wrapper){
+	gradleVersion = "2.2-rc-1"
+}

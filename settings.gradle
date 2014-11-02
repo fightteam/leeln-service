@@ -1,0 +1,8 @@
+rootProject.name = 'leeln-service-build'
+
+include 'docs', 'docs:manual', 'docs:guides'
+
+def docs = findProject(':docs')
+docs.buildFileName = 'docs.gradle'
+
+include 'leeln-service'

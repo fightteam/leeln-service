@@ -1,0 +1,33 @@
+apply plugin: 'sonar-runner'
+
+repositories {
+    //mavenLocal()
+    mavenCentral()
+    maven { url "https://repo.spring.io/plugins-release" }
+    maven { url "http://gradle.artifactoryonline.com/gradle/libs" }
+
+}
+
+sonarRunner {
+    toolVersion = "2.4"
+    sonarProperties {
+
+        property "sonar.host.url", "http://sonar.leeln.com"
+        property "sonar.jdbc.url", "jdbc:mysql://sonar.leeln.com:3306/sonar"
+        property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
+        property "sonar.jdbc.username", "sonar"
+        property "sonar.jdbc.password", "sonar"
+        property "sonar.sourceEncoding", "UTF-8"
+
+
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.projectName", "leeln repository"
+        property "sonar.jacoco.reportPath", "${buildDir.name}/jacoco.exec"
+        property "sonar.links.homepage", 'https://github.com/fightteam/leeln-repository'
+        property "sonar.links.ci", '-'
+        property "sonar.links.issue", 'https://github.com/fightteam/leeln-repository/issues'
+        property "sonar.links.scm", 'https://github.com/fightteam/leeln-repository'
+        property "sonar.links.scm_dev", 'https://github.com/fightteam/leeln-repository.git'
+        property "sonar.java.coveragePlugin", "jacoco"
+    }
+}

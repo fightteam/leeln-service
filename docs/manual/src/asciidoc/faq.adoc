@@ -1,0 +1,13 @@
+= Leeln Repository FAQ
+
+== 常见问题
+
+. <<faq-about-leeln>>
+
+
+
+[[faq-about-leeln]]
+=== leeln 是什么？
+
+Leeln 是一个网站http://leeln.com[leeln]。
+

@@ -1,0 +1,147 @@
+apply plugin: "java"
+apply plugin: "groovy"
+apply plugin: "javadocHotfix"
+apply plugin: "propdeps"
+apply plugin: "propdeps-idea"
+apply plugin: "propdeps-eclipse"
+
+group = "org.fightteam.leeln"
+
+ext.jstlVersion = '1.2.1'
+ext.servletApiVersion = '3.0.1'
+ext.springSecurityVersion = '3.2.4.RELEASE'
+ext.springVersion = '4.1.1.RELEASE'
+ext.groovyVersion = '2.0.5'
+ext.seleniumVersion = '2.33.0'
+ext.spockVersion = '0.7-groovy-2.0'
+ext.gebVersion = '0.9.0'
+ext.jedisVersion = '2.4.1'
+ext.commonsPoolVersion = '2.2'
+ext.embeddedRedisVersion = '0.2'
+ext.springDataRedisVersion = '1.3.0.RELEASE'
+
+
+ext.mybatisVersion = '3.2.8'
+ext.mybatisSpringVersion = '1.2.2'
+ext.slf4jVersion = '1.7.7'
+ext.log4jVersion = '2.1'
+
+
+ext.tomcatJdbcVersion = '8.0.14'
+ext.mysqlVersion = '5.1.33'
+
+ext.spockDependencies = [
+        dependencies.create("org.spockframework:spock-core:$spockVersion") {
+            exclude group: 'junit', module: 'junit-dep'
+        }
+]
+
+ext.gebDependencies = spockDependencies + [
+        "org.seleniumhq.selenium:selenium-htmlunit-driver:$seleniumVersion",
+        "org.gebish:geb-spock:$gebVersion",
+        'commons-httpclient:commons-httpclient:3.1',
+        "org.codehaus.groovy:groovy:$groovyVersion"
+]
+
+ext.jstlDependencies = [
+        "javax.servlet.jsp.jstl:javax.servlet.jsp.jstl-api:$jstlVersion",
+        "org.apache.taglibs:taglibs-standard-jstlel:1.2.1"
+]
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "http://repo.spring.io/libs-release" }
+    maven { url 'http://clojars.org/repo' }
+    maven { url 'http://nexus.leeln.com/content/repositories/releases/' }
+    maven { url 'http://nexus.leeln.com/content/repositories/snapshots/' }
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'org.springframework') {
+            details.useVersion springVersion
+        } 
+    }
+}
+
+
+compileJava {
+    sourceCompatibility=1.6
+    targetCompatibility=1.6
+}
+
+compileTestJava {
+    sourceCompatibility=1.8
+    targetCompatibility=1.8
+    options.compilerArgs += "-parameters"
+}
+
+[compileJava, compileTestJava]*.options*.compilerArgs = ["-Xlint:none", "-g"]
+[compileJava, javadoc, compileTestJava]*.options*.encoding = 'UTF-8'
+
+
+javadoc{
+    title = "leeln site repository $version API"
+
+    
+    options.encoding = "UTF-8"
+    //options.overview = "$rootProject.rootDir/javadoc/overview.html"
+    options.charSet = "UTF-8"
+
+    //options.header = "leeln 网站数据模块 API"
+    //options.author = true
+    options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PRIVATE
+    options.splitIndex = true
+
+}
+
+// Integration test setup
+configurations {
+    integrationTestCompile {
+        extendsFrom testCompile, optional, provided
+    }
+    integrationTestRuntime {
+        extendsFrom integrationTestCompile, testRuntime
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java.srcDir file('src/integration-test/java')
+        groovy.srcDirs file('src/integration-test/groovy')
+        resources.srcDir file('src/integration-test/resources')
+        compileClasspath = sourceSets.main.output + sourceSets.test.output + configurations.integrationTestCompile
+        runtimeClasspath = output + compileClasspath + configurations.integrationTestRuntime
+    }
+}
+
+task integrationTest(type: Test, dependsOn: jar) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    logging.captureStandardOutput(LogLevel.INFO)
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    maxParallelForks = 1
+    reports {
+        html.destination = project.file("$project.buildDir/reports/integration-tests/")
+        junitXml.destination = project.file("$project.buildDir/integration-test-results/")
+    }
+}
+
+eclipse {
+    classpath {
+        plusConfigurations += [ configurations.integrationTestCompile ]
+    }
+}
+
+project.idea.module {
+    scopes.TEST.plus += [project.configurations.integrationTestRuntime]
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+artifacts {
+    archives javadocJar
+}

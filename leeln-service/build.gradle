@@ -1,0 +1,59 @@
+apply from: JAVA_GRADLE
+apply from: MAVEN_GRADLE
+
+
+project.conf2ScopeMappings.addMapping(MavenPlugin.TEST_COMPILE_PRIORITY + 1, project.configurations.getByName("integrationTestCompile"), Conf2ScopeMappingContainer.TEST)
+project.conf2ScopeMappings.addMapping(MavenPlugin.TEST_COMPILE_PRIORITY + 2, project.configurations.getByName("integrationTestRuntime"), Conf2ScopeMappingContainer.TEST)
+check.dependsOn integrationTest
+
+configurations {
+    jacoco //Configuration Group used by Sonar to provide Code Coverage using JaCoCo
+}
+
+
+dependencies {
+
+    compile 'aopalliance:aopalliance:1.0',
+            "org.springframework:spring-aop:$springVersion",
+            "org.springframework:spring-aspects:$springVersion",
+            "org.springframework:spring-beans:$springVersion",
+            "org.springframework:spring-context:$springVersion",
+            "org.springframework:spring-expression:$springVersion",
+            "org.springframework:spring-tx:$springVersion",
+            "org.springframework:spring-jdbc:$springVersion",
+            "org.mybatis:mybatis:$mybatisVersion",
+            "org.mybatis:mybatis-spring:$mybatisSpringVersion",
+            "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion",
+            "org.slf4j:slf4j-api:$slf4jVersion",
+            "org.slf4j:jcl-over-slf4j:$slf4jVersion",
+            "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion",
+            "org.apache.tomcat:tomcat-jdbc:$tomcatJdbcVersion",
+            "mysql:mysql-connector-java:$mysqlVersion"
+
+    runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
+
+    optional "org.springframework.data:spring-data-redis:$springDataRedisVersion",
+            "org.springframework:spring-context:$springVersion",
+            "org.springframework:spring-web:$springVersion"
+
+    provided "javax.servlet:javax.servlet-api:$servletApiVersion"
+
+    integrationTestCompile "redis.clients:jedis:2.4.1",
+            "org.apache.commons:commons-pool2:2.2",
+            "redis.embedded:embedded-redis:0.2"
+
+    testCompile 'junit:junit:4.11',
+            'org.mockito:mockito-core:1.9.5',
+            "org.springframework:spring-test:$springVersion",
+            'org.easytesting:fest-assert:1.4',
+            "org.springframework.security:spring-security-core:$springSecurityVersion"
+
+    jacoco "org.jacoco:org.jacoco.agent:0.6.2.201302030002:runtime"
+}
+
+//test {
+//    jvmArgs "-javaagent:${configurations.jacoco.asPath}=destfile=${buildDir}/jacoco.exec,includes=${project.group}.*"
+//}
+//integrationTest {
+//    jvmArgs "-javaagent:${configurations.jacoco.asPath}=destfile=${buildDir}/jacoco.exec,includes=${project.group}.*"
+//}

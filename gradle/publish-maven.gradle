@@ -1,0 +1,51 @@
+apply plugin: 'propdeps-maven'
+
+install {
+    repositories.mavenInstaller {
+        customizePom(pom, project)
+    }
+}
+
+def customizePom(pom, gradleProject) {
+    pom.whenConfigured { generatedPom ->
+
+        // sort to make pom dependencies order consistent to ease comparison of older poms
+        generatedPom.dependencies = generatedPom.dependencies.sort { dep ->
+            "$dep.scope:$dep.groupId:$dep.artifactId"
+        }
+
+        // add all items necessary for maven central publication
+        generatedPom.project {
+            name = gradleProject.description
+            description = gradleProject.description
+            url = "https://github.com/fightteam/leeln-repository"
+            organization {
+                name = "leeln repository"
+                url = "https://github.com/fightteam/leeln-repository"
+            }
+            licenses {
+                license {
+                    name "The Apache Software License, Version 2.0"
+                    url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    distribution "repo"
+                }
+            }
+            scm {
+                url = "https://github.com/fightteam/leeln-repository"
+                connection = "scm:git:git://github.com/fightteam/leeln-repository"
+                developerConnection = "scm:git:git://github.com/fightteam/leeln-repository"
+            }
+            developers {
+                developer {
+                    id = "oyach"
+                    name = "欧阳澄泓"
+                    email = "lzy7750015@gmail.com"
+                }
+            }
+            issueManagement {
+                system = "GitHub"
+                url = "https://github.com/fightteam/leeln-repository/issues"
+            }
+        }
+    }
+}
