@@ -1,0 +1,5 @@
+package org.fightteam.leeln.pb;
+message UserMsg {
+    required int64 id = 1;
+    optional string username = 2;
+}

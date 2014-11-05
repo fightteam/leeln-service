@@ -6,6 +6,8 @@ apply plugin: "propdeps-idea"
 apply plugin: "propdeps-eclipse"
 
 group = "org.fightteam.leeln"
+ext.leelnRepositoryVersion = '0.0.1.BUILD-SNAPSHOT'
+
 
 ext.jstlVersion = '1.2.1'
 ext.servletApiVersion = '3.0.1'
@@ -26,6 +28,7 @@ ext.mybatisSpringVersion = '1.2.2'
 ext.slf4jVersion = '1.7.7'
 ext.log4jVersion = '2.1'
 
+ext.protobufVersion = "2.6.1"
 
 ext.tomcatJdbcVersion = '8.0.14'
 ext.mysqlVersion = '5.1.33'
@@ -53,8 +56,6 @@ repositories {
     mavenCentral()
     maven { url "http://repo.spring.io/libs-release" }
     maven { url 'http://clojars.org/repo' }
-    maven { url 'http://nexus.leeln.com/content/repositories/releases/' }
-    maven { url 'http://nexus.leeln.com/content/repositories/snapshots/' }
 }
 
 configurations.all {

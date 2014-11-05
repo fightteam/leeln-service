@@ -28,6 +28,11 @@
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="EntryPointsManager">
+    <entry_points version="2.0">
+      <entry_point TYPE="method" FQNAME="org.fightteam.leeln.service.UserService java.lang.String loadUser()" />
+    </entry_points>
+  </component>
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$" />
   </component>
@@ -44,6 +49,17 @@
     </option>
   </component>
   <component name="IdProvider" IDEtalkID="448AF4E939EA045752BA0A2463EA9D7B" />
+  <component name="ProjectFacetManager">
+    <default-configurations>
+      <entry facet-type="protobuf">
+        <default-facet-configuration>
+          <configuration>
+            <option name="COMPILER_OUTPUT_SOURCE_DIRECTORY" value="$PROJECT_DIR$/leeln-service/build/generated-sources" />
+          </configuration>
+        </default-facet-configuration>
+      </entry>
+    </default-configurations>
+  </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
       <profile-state>

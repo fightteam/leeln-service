@@ -1,5 +1,7 @@
 apply from: JAVA_GRADLE
 apply from: MAVEN_GRADLE
+apply plugin: 'protobuf'
+
 
 
 project.conf2ScopeMappings.addMapping(MavenPlugin.TEST_COMPILE_PRIORITY + 1, project.configurations.getByName("integrationTestCompile"), Conf2ScopeMappingContainer.TEST)
@@ -10,10 +12,28 @@ configurations {
     jacoco //Configuration Group used by Sonar to provide Code Coverage using JaCoCo
 }
 
+ext.leelnRepositoryVersion = '0.0.1.BUILD-SNAPSHOT'
+
+// Re-generate Protobuf classes from *.proto files and move them in test sources
+//if (project.hasProperty('genProtobuf')) {
+//    apply plugin: 'protobuf'
+//
+//    task updateGenProtobuf(type:Copy, dependsOn: ":spring-web:generateTestProto") {
+//        from "${project.buildDir}/generated-sources/test/"
+//        into "${projectDir}/src/test/java"
+//        doLast {
+//            project.delete "${project.buildDir}/generated-sources/test"
+//        }
+//    }
+//
+//    tasks.getByPath("compileTestJava").dependsOn "updateGenProtobuf"
+//}
+//protocPath = '/usr/local/bin/protoc'
 
 dependencies {
 
-    compile 'aopalliance:aopalliance:1.0',
+    compile "org.fightteam.leeln:leeln-repository:$leelnRepositoryVersion",
+            'aopalliance:aopalliance:1.0',
             "org.springframework:spring-aop:$springVersion",
             "org.springframework:spring-aspects:$springVersion",
             "org.springframework:spring-beans:$springVersion",
@@ -28,7 +48,9 @@ dependencies {
             "org.slf4j:jcl-over-slf4j:$slf4jVersion",
             "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion",
             "org.apache.tomcat:tomcat-jdbc:$tomcatJdbcVersion",
-            "mysql:mysql-connector-java:$mysqlVersion"
+            "mysql:mysql-connector-java:$mysqlVersion",
+            "com.googlecode.protobuf-java-format:protobuf-java-format:1.2",
+            "com.google.protobuf:protobuf-java:$protobufVersion"
 
     runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
 
@@ -46,11 +68,23 @@ dependencies {
             'org.mockito:mockito-core:1.9.5',
             "org.springframework:spring-test:$springVersion",
             'org.easytesting:fest-assert:1.4',
-            "org.springframework.security:spring-security-core:$springSecurityVersion"
+            "org.springframework.security:spring-security-core:$springSecurityVersion",
+            'com.h2database:h2:1.4.182'
 
     jacoco "org.jacoco:org.jacoco.agent:0.6.2.201302030002:runtime"
+
 }
 
+task printDeps(dependsOn: build) << {
+    configurations.each { println it }
+    sourceSets.each { println it.getCompileTaskName("proto") }
+    sourceSets.each { println it.getCompileTaskName("java") }
+    sourceSets.each { println it }
+    println tasks['generateProto'].source
+    println tasks['compileJava'].source
+    println project.buildDir
+    println project.buildDir.path
+}
 //test {
 //    jvmArgs "-javaagent:${configurations.jacoco.asPath}=destfile=${buildDir}/jacoco.exec,includes=${project.group}.*"
 //}
