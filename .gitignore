@@ -12,3 +12,5 @@ bin
 .project
 target
 out
+
+proto

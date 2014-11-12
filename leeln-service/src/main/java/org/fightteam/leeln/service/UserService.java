@@ -1,6 +1,7 @@
 package org.fightteam.leeln.service;
 
 import org.fightteam.leeln.core.User;
+import org.fightteam.leeln.rpc.annotation.Remote;
 
 /**
  * 用户业务逻辑类
@@ -8,6 +9,7 @@ import org.fightteam.leeln.core.User;
  * @author oych
  * @since 0.0.1
  */
+@Remote
 public interface UserService {
 
     /**

@@ -2,6 +2,12 @@ apply from: JAVA_GRADLE
 apply from: MAVEN_GRADLE
 apply plugin: 'protobuf'
 
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+
+
+idea.module.sourceDirs += file('build/generated-sources/thrift/main')
 
 
 project.conf2ScopeMappings.addMapping(MavenPlugin.TEST_COMPILE_PRIORITY + 1, project.configurations.getByName("integrationTestCompile"), Conf2ScopeMappingContainer.TEST)
@@ -38,6 +44,7 @@ dependencies {
             "org.springframework:spring-aspects:$springVersion",
             "org.springframework:spring-beans:$springVersion",
             "org.springframework:spring-context:$springVersion",
+            "org.springframework:spring-context-support:$springVersion",
             "org.springframework:spring-expression:$springVersion",
             "org.springframework:spring-tx:$springVersion",
             "org.springframework:spring-jdbc:$springVersion",
@@ -50,7 +57,11 @@ dependencies {
             "org.apache.tomcat:tomcat-jdbc:$tomcatJdbcVersion",
             "mysql:mysql-connector-java:$mysqlVersion",
             "com.googlecode.protobuf-java-format:protobuf-java-format:1.2",
-            "com.google.protobuf:protobuf-java:$protobufVersion"
+            "com.google.protobuf:protobuf-java:$protobufVersion",
+            "io.netty:netty-all:$nettyVersion",
+            "org.apache.thrift:libthrift:0.9.1",
+            'com.googlecode.protobuf-rpc-pro:protobuf-rpc-pro-duplex:3.3'
+
 
     runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
 
@@ -84,6 +95,11 @@ task printDeps(dependsOn: build) << {
     println tasks['compileJava'].source
     println project.buildDir
     println project.buildDir.path
+}
+
+task run(type:JavaExec) {
+    main = "org.fightteam.leeln.config.Main"
+    classpath = sourceSets.main.runtimeClasspath
 }
 //test {
 //    jvmArgs "-javaagent:${configurations.jacoco.asPath}=destfile=${buildDir}/jacoco.exec,includes=${project.group}.*"

@@ -28,7 +28,8 @@ ext.mybatisSpringVersion = '1.2.2'
 ext.slf4jVersion = '1.7.7'
 ext.log4jVersion = '2.1'
 
-ext.protobufVersion = "2.6.1"
+ext.protobufVersion = "2.6.0"
+ext.nettyVersion = "4.0.24.Final"
 
 ext.tomcatJdbcVersion = '8.0.14'
 ext.mysqlVersion = '5.1.33'
