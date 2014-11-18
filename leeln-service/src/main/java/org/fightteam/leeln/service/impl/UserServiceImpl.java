@@ -4,17 +4,16 @@ import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.ServiceException;
 import org.fightteam.leeln.core.User;
-import org.fightteam.leeln.proto.RpcProto;
 import org.fightteam.leeln.proto.UserServiceProto;
 import org.fightteam.leeln.repository.UserRepository;
-import org.fightteam.leeln.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 用户业务逻辑实现类
@@ -35,46 +34,241 @@ public class UserServiceImpl implements UserServiceProto.UserService.Interface, 
 
 
     @Override
-    public UserServiceProto.UserResponse getUser(RpcController controller, UserServiceProto.UserRequest request) throws ServiceException {
+    public UserServiceProto.UserMsg findByUsername(RpcController controller, UserServiceProto.UsernameMsg request) throws ServiceException {
         String username = request.getUsername();
-        //User user = userRepository.findOne(username);
-        User user = new User();
-        user.setUsername("欧阳澄泓");
-        user.setId(3L);
+        User user = userRepository.findByUsername(username);
 
-        UserServiceProto.UserVO userVO = UserServiceProto.UserVO.newBuilder()
+        UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
                 .setUsername(user.getUsername())
+                .setNickname(user.getNickname())
                 .setId(user.getId())
                 .build();
 
-        UserServiceProto.UserResponse userResponse = UserServiceProto.UserResponse.newBuilder()
-                .addUser(userVO)
-                .build();
-
-
-        return userResponse;
+        return userMsg;
     }
 
     @Override
-    public void getUser(RpcController controller, UserServiceProto.UserRequest request, RpcCallback<UserServiceProto.UserResponse> done) {
+    public UserServiceProto.UserMsg findByNickname(RpcController controller, UserServiceProto.NicknameMsg request) throws ServiceException {
+        String nickname = request.getNickname();
+        User user = userRepository.findByUsername(nickname);
 
+        UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
+                .setUsername(user.getUsername())
+                .setNickname(user.getNickname())
+                .setId(user.getId())
+                .build();
 
-        UserServiceProto.UserResponse userResponse = null;
+        return userMsg;
+    }
+
+    @Override
+    public UserServiceProto.UsersMsg findAll(RpcController controller, UserServiceProto.EmptyMsg request) throws ServiceException {
+
+        List<User> users = userRepository.findAll();
+
+        List<UserServiceProto.UserMsg> userMsgs = new ArrayList<UserServiceProto.UserMsg>(users.size());
+
+        for (User user : users){
+            UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
+                    .setUsername(user.getUsername())
+                    .setNickname(user.getNickname())
+                    .setId(user.getId())
+                    .build();
+            userMsgs.add(userMsg);
+        }
+
+        UserServiceProto.UsersMsg usersMsg = UserServiceProto.UsersMsg.newBuilder().addAllUsers(userMsgs).build();
+
+        return usersMsg;
+    }
+
+    @Override
+    public UserServiceProto.UserMsg findById(RpcController controller, UserServiceProto.IdMsg request) throws ServiceException {
+        long id = request.getId();
+        User user = userRepository.findById(id);
+
+        UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
+                .setUsername(user.getUsername())
+                .setNickname(user.getNickname())
+                .setId(user.getId())
+                .build();
+
+        return userMsg;
+    }
+
+    @Override
+    public UserServiceProto.EmptyMsg insert(RpcController controller, UserServiceProto.InsertMsg request) throws ServiceException {
+        User user = new User();
+
+        user.setNickname(request.getNickname());
+        user.setUsername(request.getUsername());
+
+        userRepository.save(user);
+        UserServiceProto.EmptyMsg emptyMsg = UserServiceProto.EmptyMsg.getDefaultInstance();
+        return emptyMsg;
+    }
+
+    @Override
+    public UserServiceProto.EmptyMsg update(RpcController controller, UserServiceProto.UserMsg request) throws ServiceException {
+        User user = new User();
+
+        user.setNickname(request.getNickname());
+        user.setUsername(request.getUsername());
+        user.setId(request.getId());
+        userRepository.update(user);
+
+        UserServiceProto.EmptyMsg emptyMsg = UserServiceProto.EmptyMsg.getDefaultInstance();
+        return emptyMsg;
+    }
+
+    @Override
+    public UserServiceProto.EmptyMsg delete(RpcController controller, UserServiceProto.IdMsg request) throws ServiceException {
+        long id = request.getId();
+
+        userRepository.delete(id);
+
+        UserServiceProto.EmptyMsg emptyMsg = UserServiceProto.EmptyMsg.getDefaultInstance();
+        return emptyMsg;
+    }
+
+    @Override
+    public void findByUsername(RpcController controller, UserServiceProto.UsernameMsg request, RpcCallback<UserServiceProto.UserMsg> done) {
+
+        UserServiceProto.UserMsg userMsg = null;
         try {
-            userResponse = getUser(controller, request);
+            userMsg = findByUsername(controller, request);
         } catch (ServiceException e) {
             log.error(e.getMessage());
         }
 
-        if (done != null){
-            done.run(userResponse);
-        }else{
-            if (userResponse == null){
+        if (done != null) {
+            done.run(userMsg);
+        } else {
+            if (userMsg == null) {
                 log.error("error occured");
-            }else{
-                log.info("response user is :" + userResponse.toString());
+            } else {
+                log.info("response user is success");
             }
         }
+    }
 
+    @Override
+    public void findByNickname(RpcController controller, UserServiceProto.NicknameMsg request, RpcCallback<UserServiceProto.UserMsg> done) {
+        UserServiceProto.UserMsg userMsg = null;
+        try {
+            userMsg = findByNickname(controller, request);
+        } catch (ServiceException e) {
+            log.error(e.getMessage());
+        }
+
+        if (done != null) {
+            done.run(userMsg);
+        } else {
+            if (userMsg == null) {
+                log.error("error occured");
+            } else {
+                log.info("response user is success");
+            }
+        }
+    }
+
+    @Override
+    public void findAll(RpcController controller, UserServiceProto.EmptyMsg request, RpcCallback<UserServiceProto.UsersMsg> done) {
+        UserServiceProto.UsersMsg usersMsg = null;
+        try {
+            usersMsg = findAll(controller, request);
+        } catch (ServiceException e) {
+            log.error(e.getMessage());
+        }
+
+        if (done != null) {
+            done.run(usersMsg);
+        } else {
+            if (usersMsg == null) {
+                log.error("error occured");
+            } else {
+                log.info("response user is success");
+            }
+        }
+    }
+
+    @Override
+    public void findById(RpcController controller, UserServiceProto.IdMsg request, RpcCallback<UserServiceProto.UserMsg> done) {
+        UserServiceProto.UserMsg userMsg = null;
+        try {
+            userMsg = findById(controller, request);
+        } catch (ServiceException e) {
+            log.error(e.getMessage());
+        }
+
+        if (done != null) {
+            done.run(userMsg);
+        } else {
+            if (userMsg == null) {
+                log.error("error occured");
+            } else {
+                log.info("response user is success");
+            }
+        }
+    }
+
+    @Override
+    public void insert(RpcController controller, UserServiceProto.InsertMsg request, RpcCallback<UserServiceProto.EmptyMsg> done) {
+        UserServiceProto.EmptyMsg emptyMsg = null;
+        try {
+            emptyMsg = insert(controller, request);
+        } catch (ServiceException e) {
+            log.error(e.getMessage());
+        }
+
+        if (done != null) {
+            done.run(emptyMsg);
+        } else {
+            if (emptyMsg == null) {
+                log.error("error occured");
+            } else {
+                log.info("response user is success");
+            }
+        }
+    }
+
+    @Override
+    public void update(RpcController controller, UserServiceProto.UserMsg request, RpcCallback<UserServiceProto.EmptyMsg> done) {
+        UserServiceProto.EmptyMsg emptyMsg = null;
+        try {
+            emptyMsg = update(controller, request);
+        } catch (ServiceException e) {
+            log.error(e.getMessage());
+        }
+
+        if (done != null) {
+            done.run(emptyMsg);
+        } else {
+            if (emptyMsg == null) {
+                log.error("error occured");
+            } else {
+                log.info("response user is success");
+            }
+        }
+    }
+
+    @Override
+    public void delete(RpcController controller, UserServiceProto.IdMsg request, RpcCallback<UserServiceProto.EmptyMsg> done) {
+        UserServiceProto.EmptyMsg emptyMsg = null;
+        try {
+            emptyMsg = delete(controller, request);
+        } catch (ServiceException e) {
+            log.error(e.getMessage());
+        }
+
+        if (done != null) {
+            done.run(emptyMsg);
+        } else {
+            if (emptyMsg == null) {
+                log.error("error occured");
+            } else {
+                log.info("response user is success");
+            }
+        }
     }
 }

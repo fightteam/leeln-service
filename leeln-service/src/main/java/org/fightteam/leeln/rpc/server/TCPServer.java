@@ -2,6 +2,8 @@ package org.fightteam.leeln.rpc.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ import java.net.InetSocketAddress;
  */
 @Component
 public class TCPServer {
+    private static final Logger log = LoggerFactory.getLogger(TCPServer.class);
 
     @Autowired
     private ServerBootstrap b;
@@ -34,7 +37,7 @@ public class TCPServer {
     @PostConstruct
     public void start() throws Exception {
         if (serverStart){
-            System.out.println("Starting server at " + tcpPort);
+            log.info("Starting server at " + tcpPort.getHostName());
 
             serverChannel = b.bind(tcpPort).sync().channel().closeFuture().sync()
                   .channel();

@@ -6,14 +6,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
-import org.fightteam.leeln.rpc.handler.StringProtocolInitalizer;
+import org.fightteam.leeln.rpc.handler.ProtocolInitalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -55,7 +52,8 @@ public class AppConfig {
     private int backlog;
 
     @Autowired
-    private StringProtocolInitalizer protocolInitalizer;
+    @Qualifier("protocolInitializer")
+    private ProtocolInitalizer protocolInitalizer;
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
@@ -109,15 +107,7 @@ public class AppConfig {
         return new ByteArrayEncoder();
     }
 
-    @Bean
-    public ProtobufVarint32LengthFieldPrepender protobufVarint32LengthFieldPrepender() {
-        return new ProtobufVarint32LengthFieldPrepender();
-    }
 
-    @Bean
-    public ProtobufVarint32FrameDecoder protobufVarint32FrameDecoder() {
-        return new ProtobufVarint32FrameDecoder();
-    }
 
 
 }

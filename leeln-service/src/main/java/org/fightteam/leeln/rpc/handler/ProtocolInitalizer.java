@@ -14,7 +14,10 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.codec.string.StringEncoder;
 import org.fightteam.leeln.proto.RpcProto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * description
@@ -23,7 +26,8 @@ import org.springframework.stereotype.Component;
  * @since 0.0.1
  */
 @Component
-public class StringProtocolInitalizer extends ChannelInitializer<SocketChannel> {
+@Qualifier("protocolInitializer")
+public class ProtocolInitalizer extends ChannelInitializer<SocketChannel> {
 
 
     private static final int MAX_FRAME_BYTES_LENGTH = 1048576;
@@ -32,19 +36,15 @@ public class StringProtocolInitalizer extends ChannelInitializer<SocketChannel> 
     NettyRpcServerHandler nettyRpcServerHandler;
 
     @Autowired
-    ProtobufVarint32LengthFieldPrepender prepender;
-
-    @Autowired
-    ProtobufVarint32FrameDecoder protobufVarint32FrameDecoder;
-
-    @Autowired
     ByteArrayEncoder byteArrayEncoder;
+
+    @Autowired
+    ByteArrayDecoder byteArrayDecoder;
+
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
-        System.out.println("==============");
-
 
        // pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(MAX_FRAME_BYTES_LENGTH, 0, 4, 0, 4));
         pipeline.addLast("protobufDecoder", new ProtobufDecoder(RpcProto.RpcRequest.getDefaultInstance()));
@@ -66,19 +66,19 @@ public class StringProtocolInitalizer extends ChannelInitializer<SocketChannel> 
         this.nettyRpcServerHandler = nettyRpcServerHandler;
     }
 
-    public ProtobufVarint32LengthFieldPrepender getPrepender() {
-        return prepender;
+    public ByteArrayEncoder getByteArrayEncoder() {
+        return byteArrayEncoder;
     }
 
-    public void setPrepender(ProtobufVarint32LengthFieldPrepender prepender) {
-        this.prepender = prepender;
+    public void setByteArrayEncoder(ByteArrayEncoder byteArrayEncoder) {
+        this.byteArrayEncoder = byteArrayEncoder;
     }
 
-    public ProtobufVarint32FrameDecoder getProtobufVarint32FrameDecoder() {
-        return protobufVarint32FrameDecoder;
+    public ByteArrayDecoder getByteArrayDecoder() {
+        return byteArrayDecoder;
     }
 
-    public void setProtobufVarint32FrameDecoder(ProtobufVarint32FrameDecoder protobufVarint32FrameDecoder) {
-        this.protobufVarint32FrameDecoder = protobufVarint32FrameDecoder;
+    public void setByteArrayDecoder(ByteArrayDecoder byteArrayDecoder) {
+        this.byteArrayDecoder = byteArrayDecoder;
     }
 }

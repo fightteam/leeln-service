@@ -37,19 +37,10 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
     private final Map<String, Service> serviceMap = new ConcurrentHashMap<String, Service>();
     private final Map<String, BlockingService> blockingServiceMap = new ConcurrentHashMap<String, BlockingService>();
 
-
-
-
-
-
-
     @PostConstruct
     public void setUp(){
-        System.out.println("-----------------");
-        logger.info("find service:" + UserServiceProto.UserService.getDescriptor().getFullName());
         registerService(UserServiceProto.UserService.newReflectiveService(new UserServiceImpl()));
         registerBlockingService(UserServiceProto.UserService.newReflectiveBlockingService(new UserServiceImpl()));
-
     }
 
 
@@ -220,6 +211,8 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
         if(serviceMap.containsKey(service.getDescriptorForType().getFullName())) {
             throw new IllegalArgumentException("Service already registered");
         }
+        logger.info("find service:" + service.getDescriptorForType().getFullName());
+
         serviceMap.put(service.getDescriptorForType().getFullName(), service);
     }
 
@@ -234,6 +227,8 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
         if(blockingServiceMap.containsKey(service.getDescriptorForType().getFullName())) {
             throw new IllegalArgumentException("BlockingService already registered");
         }
+        logger.info("find BlockingService:" + service.getDescriptorForType().getFullName());
+
         blockingServiceMap.put(service.getDescriptorForType().getFullName(), service);
     }
 
