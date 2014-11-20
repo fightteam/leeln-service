@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -34,13 +35,27 @@ public class TCPServer {
     @Value("${server.start}")
     private boolean serverStart;
 
+    /**
+     * 用单独的线程启动server防止阻挡了spring的启动
+     *
+     * @throws Exception
+     */
     @PostConstruct
     public void start() throws Exception {
+
         if (serverStart){
             log.info("Starting server at " + tcpPort.getHostName());
-
-            serverChannel = b.bind(tcpPort).sync().channel().closeFuture().sync()
-                  .channel();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        serverChannel = b.bind(tcpPort).sync().channel().closeFuture().sync()
+                                .channel();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         }
     }
 

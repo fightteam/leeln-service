@@ -6,9 +6,13 @@ import com.google.protobuf.ServiceException;
 import org.fightteam.leeln.core.User;
 import org.fightteam.leeln.proto.UserServiceProto;
 import org.fightteam.leeln.repository.UserRepository;
+import org.fightteam.leeln.rpc.utils.BuilderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +21,14 @@ import java.util.List;
 
 /**
  * 用户业务逻辑实现类
- * <p/>
+ *
  * 默认不开启事务
  *
  * @author oych
  * @since 0.0.1
  */
-//@Service
+@Service
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
 public class UserServiceImpl implements UserServiceProto.UserService.Interface, UserServiceProto.UserService.BlockingInterface {
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
@@ -38,13 +43,7 @@ public class UserServiceImpl implements UserServiceProto.UserService.Interface, 
         String username = request.getUsername();
         User user = userRepository.findByUsername(username);
 
-        UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
-                .setUsername(user.getUsername())
-                .setNickname(user.getNickname())
-                .setId(user.getId())
-                .build();
-
-        return userMsg;
+        return BuilderUtils.builder(UserServiceProto.UserMsg.getDefaultInstance(), user);
     }
 
     @Override
@@ -52,13 +51,7 @@ public class UserServiceImpl implements UserServiceProto.UserService.Interface, 
         String nickname = request.getNickname();
         User user = userRepository.findByUsername(nickname);
 
-        UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
-                .setUsername(user.getUsername())
-                .setNickname(user.getNickname())
-                .setId(user.getId())
-                .build();
-
-        return userMsg;
+        return BuilderUtils.builder(UserServiceProto.UserMsg.getDefaultInstance(), user);
     }
 
     @Override
@@ -69,11 +62,8 @@ public class UserServiceImpl implements UserServiceProto.UserService.Interface, 
         List<UserServiceProto.UserMsg> userMsgs = new ArrayList<UserServiceProto.UserMsg>(users.size());
 
         for (User user : users){
-            UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
-                    .setUsername(user.getUsername())
-                    .setNickname(user.getNickname())
-                    .setId(user.getId())
-                    .build();
+            UserServiceProto.UserMsg userMsg = BuilderUtils.builder(UserServiceProto.UserMsg.getDefaultInstance(), user);
+
             userMsgs.add(userMsg);
         }
 
@@ -87,13 +77,10 @@ public class UserServiceImpl implements UserServiceProto.UserService.Interface, 
         long id = request.getId();
         User user = userRepository.findById(id);
 
-        UserServiceProto.UserMsg userMsg = UserServiceProto.UserMsg.newBuilder()
-                .setUsername(user.getUsername())
-                .setNickname(user.getNickname())
-                .setId(user.getId())
-                .build();
+        UserServiceProto.UserMsg userMsg;
 
-        return userMsg;
+        return BuilderUtils.builder(UserServiceProto.UserMsg.getDefaultInstance(), user);
+
     }
 
     @Override

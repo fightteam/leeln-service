@@ -37,27 +37,31 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
     private final Map<String, Service> serviceMap = new ConcurrentHashMap<String, Service>();
     private final Map<String, BlockingService> blockingServiceMap = new ConcurrentHashMap<String, BlockingService>();
 
+    @Autowired
+    private UserServiceImpl userService;
+
+    @Autowired
+    private UserServiceImpl userBlockingService;
+
+
     @PostConstruct
     public void setUp(){
-        registerService(UserServiceProto.UserService.newReflectiveService(new UserServiceImpl()));
-        registerBlockingService(UserServiceProto.UserService.newReflectiveBlockingService(new UserServiceImpl()));
+        registerService(UserServiceProto.UserService.newReflectiveService(userService));
+        registerBlockingService(UserServiceProto.UserService.newReflectiveBlockingService(userBlockingService));
     }
 
 
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, RpcProto.RpcRequest e) throws Exception {
-        logger.info("接收到数据：");
-        System.out.println(e);
-        System.out.println("------------");
+
+
         final RpcProto.RpcRequest request = e;
         String fullName = request.getMethodName();
         String methodName = fullName.substring(fullName.lastIndexOf(".") + 1);
 
         String serviceName = fullName.substring(1, fullName.lastIndexOf("."));
 
-        System.out.println(methodName);
-        System.out.println(serviceName);
         logger.info("Received request for serviceName: " + serviceName + ", method: " + methodName);
 
         // 阻塞 service
@@ -95,18 +99,18 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
                 } else if (methodResponse == null) {
                     throw new RpcException(request, "BlockingService RPC returned null response");
                 }
-                RpcProto.RpcResponse response = RpcProto.RpcResponse.newBuilder()
-                        .setId(request.getId())
-                        .setResponseMessage(methodResponse.toByteString())
-                        .build();
-                System.out.println("==============");
-                System.out.println(response);
-                System.out.println(response.getId());
-                System.out.println(response.getResponseMessage());
 
+
+
+                RpcProto.RpcResponse.Builder builder = RpcProto.RpcResponse.newBuilder().setId(request.getId());
+                // 方法返回空值就不进行消息设置
+                if (methodResponse.isInitialized()){
+                    builder.setResponseMessage(methodResponse.toByteString());
+                }
+                RpcProto.RpcResponse response = builder.build();
+
+                logger.info("Response Id is :" + response.getId());
                 ctx.channel().writeAndFlush(response);
-                //ctx.channel().close();
-               // e.writeBytes(response.toByteArray());
             }
 
         } else { // 非阻塞service
@@ -132,10 +136,17 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
                 RpcCallback<Message> callback = !request.hasId() ? null : new RpcCallback<Message>() {
                     public void run(Message methodResponse) {
                         if (methodResponse != null) {
-                            channel.writeAndFlush(RpcProto.RpcResponse.newBuilder()
-                                    .setId(request.getId())
-                                    .setResponseMessage(methodResponse.toByteString())
-                                    .build());
+
+                            RpcProto.RpcResponse.Builder builder = RpcProto.RpcResponse.newBuilder()
+                                    .setId(request.getId());
+                            // 方法返回空值就不进行消息设置
+                            if (methodResponse.isInitialized()){
+                                builder.setResponseMessage(methodResponse.toByteString());
+                            }
+                            RpcProto.RpcResponse response = builder.build();
+
+                            logger.info("Response Id is :" + response.getId());
+                            channel.writeAndFlush(response);
                         } else {
                             logger.info("service callback returned null message");
                             RpcProto.RpcResponse.Builder builder = RpcProto.RpcResponse.newBuilder()
@@ -161,19 +172,19 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("Channel is active");
+        logger.info(ctx.channel().remoteAddress() + " Channel is active");
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("Channel is disconnected");
+        logger.info(ctx.channel().remoteAddress() + " Channel is disconnected");
         super.channelInactive(ctx);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.warn("exceptionCaught", cause);
+        logger.warn(ctx.channel().remoteAddress() + " exceptionCaught", cause);
         RpcProto.RpcResponse.Builder responseBuilder = RpcProto.RpcResponse.newBuilder();
         if (cause instanceof NoSuchServiceException) {
             responseBuilder.setErrorCode(RpcProto.ErrorCode.SERVICE_NOT_FOUND);

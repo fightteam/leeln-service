@@ -35,13 +35,6 @@ public class ProtocolInitalizer extends ChannelInitializer<SocketChannel> {
     @Autowired
     NettyRpcServerHandler nettyRpcServerHandler;
 
-    @Autowired
-    ByteArrayEncoder byteArrayEncoder;
-
-    @Autowired
-    ByteArrayDecoder byteArrayDecoder;
-
-
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
@@ -66,19 +59,5 @@ public class ProtocolInitalizer extends ChannelInitializer<SocketChannel> {
         this.nettyRpcServerHandler = nettyRpcServerHandler;
     }
 
-    public ByteArrayEncoder getByteArrayEncoder() {
-        return byteArrayEncoder;
-    }
 
-    public void setByteArrayEncoder(ByteArrayEncoder byteArrayEncoder) {
-        this.byteArrayEncoder = byteArrayEncoder;
-    }
-
-    public ByteArrayDecoder getByteArrayDecoder() {
-        return byteArrayDecoder;
-    }
-
-    public void setByteArrayDecoder(ByteArrayDecoder byteArrayDecoder) {
-        this.byteArrayDecoder = byteArrayDecoder;
-    }
 }

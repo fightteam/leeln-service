@@ -1,12 +1,15 @@
 package org.fightteam.leeln.config;
 
+import com.google.protobuf.Service;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import org.fightteam.leeln.proto.UserServiceProto;
 import org.fightteam.leeln.rpc.handler.ProtocolInitalizer;
+import org.fightteam.leeln.service.impl.UserServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +32,7 @@ import java.util.Set;
  */
 @Configuration
 @PropertySource(value = "classpath:properties/app.properties")
-//@EnableAspectJAutoProxy(proxyTargetClass = true)
+@EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableTransactionManagement
 @ComponentScan(basePackages = "org.fightteam.leeln")
 @Import(DataSourceConfig.class)
@@ -96,18 +99,6 @@ public class AppConfig {
         options.put(ChannelOption.SO_BACKLOG, backlog);
         return options;
     }
-
-    @Bean
-    public ByteArrayDecoder byteArrayDecoder() {
-        return new ByteArrayDecoder();
-    }
-
-    @Bean
-    public ByteArrayEncoder byteArrayEncoder() {
-        return new ByteArrayEncoder();
-    }
-
-
 
 
 }
