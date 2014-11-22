@@ -1,3 +1,5 @@
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Copy
+
 apply from: JAVA_GRADLE
 apply from: MAVEN_GRADLE
 apply plugin: 'protobuf'
@@ -123,17 +125,3 @@ sourceSets {
     }
 }
 
-// copy sql files when package app
-task processEnv(type: Copy) {
-    if ("$environment" != "" ){
-        println "$environment"
-        from "src/main/environment/$environment/sql-schema"
-        into ""
-    }else{
-        println 'aaaaa'
-    }
-
-}
-
-classes.dependsOn processEnv
-processEnv.mustRunAfter processResources
