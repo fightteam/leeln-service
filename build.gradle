@@ -1,8 +1,7 @@
 apply plugin: "base"
-apply plugin: "java"
 buildscript {
 	repositories {
-        //mavenLocal()
+        jcenter()
         mavenCentral()
 		maven { url "https://repo.spring.io/plugins-release" }
 		maven { url "http://gradle.artifactoryonline.com/gradle/libs" }
@@ -14,7 +13,7 @@ buildscript {
         classpath("org.gradle.api.plugins:gradle-tomcat-plugin:1.2.3")
 	    classpath('me.champeau.gradle:gradle-javadoc-hotfix-plugin:0.1')
 		classpath("ws.antonov.gradle.plugins:gradle-plugin-protobuf:0.9.1")
-		classpath('org.asciidoctor:asciidoctor-gradle-plugin:0.7.0')
+		classpath('org.asciidoctor:asciidoctor-gradle-plugin:1.5.0')
         classpath('org.asciidoctor:asciidoctor-java-integration:0.1.4.preview.1')
 	}
 }
@@ -30,8 +29,6 @@ ext.SONAR_GRADLE = "$rootDir/gradle/sonar.gradle"
 
 
 
-
-
 // Set up different subproject lists for individual configuration
 ext.javaProjects = subprojects.findAll {
     project -> project.name != 'docs' && project.name != 'manual' && project.name != 'guides'
@@ -43,8 +40,13 @@ ext.snapshotBuild = version.endsWith('SNAPSHOT')
 apply from: IDE_GRADLE
 apply from: SONAR_GRADLE
 
-// Task for creating the distro zip
 
+configure(javaProjects) {
+    apply from: JAVA_GRADLE
+    apply from: MAVEN_GRADLE
+}
+
+// Task for creating the distro zip
 task dist(type: Zip) {
     dependsOn subprojects*.tasks*.matching { task -> task.name == 'assemble' || task.name.endsWith('Zip') || task.name.endsWith('generatePom') }
     classifier = 'dist'
@@ -55,7 +57,7 @@ task dist(type: Zip) {
     def zipRootDir = "${project.name}-$version"
     into(zipRootDir) {
         from(rootDir) {
-            include '*.txt'
+            include '*.txt', '*.md'
         }
         into('docs') {
             with(project(':docs').apiSpec)
@@ -72,10 +74,9 @@ task dist(type: Zip) {
 artifacts {
     archives dist
     archives project(':docs').docsZip
-    archives project(':docs').schemaZip
 }
 
 
 task wrapper(type: Wrapper){
-	gradleVersion = "2.2-rc-1"
+	gradleVersion = "2.2.1"
 }

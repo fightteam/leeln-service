@@ -1,7 +1,4 @@
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Copy
 
-apply from: JAVA_GRADLE
-apply from: MAVEN_GRADLE
 apply plugin: 'protobuf'
 
 apply plugin: 'idea'

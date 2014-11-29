@@ -2,6 +2,7 @@ apply plugin: "java"
 apply plugin: "groovy"
 apply plugin: "javadocHotfix"
 apply plugin: "propdeps"
+apply plugin: "propdeps-maven"
 apply plugin: "propdeps-idea"
 apply plugin: "propdeps-eclipse"
 
@@ -11,7 +12,7 @@ ext.leelnRepositoryVersion = '0.0.1.BUILD-SNAPSHOT'
 
 ext.jstlVersion = '1.2.1'
 ext.servletApiVersion = '3.0.1'
-ext.springSecurityVersion = '3.2.4.RELEASE'
+ext.springSecurityVersion = '4.0.0.M2'
 ext.springVersion = '4.1.1.RELEASE'
 ext.groovyVersion = '2.0.5'
 ext.seleniumVersion = '2.33.0'
@@ -83,7 +84,7 @@ compileTestJava {
 [compileJava, javadoc, compileTestJava]*.options*.encoding = 'UTF-8'
 
 
-javadoc{
+javadoc {
     title = "leeln site repository $version API"
 
     
@@ -95,6 +96,12 @@ javadoc{
     //options.author = true
     options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PRIVATE
     options.splitIndex = true
+
+    options.links = [
+            "http://docs.spring.io/spring/docs/4.1.2.RELEASE/javadoc-api/",
+            "http://docs.spring.io/spring-security/site/docs/4.0.0.M2/apidocs/",
+            "http:/ /download.oracle.com/javase/7/docs/api/"
+    ]
 
 }
 
@@ -144,6 +151,13 @@ task javadocJar(type: Jar) {
     from javadoc
 }
 
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
 artifacts {
     archives javadocJar
+    archives sourceJar
+
 }
