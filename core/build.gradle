@@ -1,0 +1,39 @@
+
+
+dependencies {
+
+    compile 'aopalliance:aopalliance:1.0',
+            "org.springframework:spring-aop:$springVersion",
+            "org.springframework:spring-aspects:$springVersion",
+            "org.springframework:spring-beans:$springVersion",
+            "org.springframework:spring-context:$springVersion",
+            "org.springframework:spring-context-support:$springVersion",
+            "org.springframework:spring-expression:$springVersion",
+            "org.springframework:spring-tx:$springVersion",
+            "org.springframework:spring-jdbc:$springVersion",
+            "org.mybatis:mybatis:$mybatisVersion",
+            "org.mybatis:mybatis-spring:$mybatisSpringVersion",
+            "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion",
+            "org.slf4j:slf4j-api:$slf4jVersion",
+            "org.slf4j:jcl-over-slf4j:$slf4jVersion",
+            "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion",
+            "org.apache.tomcat:tomcat-jdbc:$tomcatJdbcVersion",
+            "mysql:mysql-connector-java:$mysqlVersion"
+
+
+
+
+    runtime "org.apache.logging.log4j:log4j-core:$log4jVersion"
+
+    optional "org.springframework.data:spring-data-redis:$springDataRedisVersion",
+            "org.springframework:spring-context:$springVersion"
+
+    testCompile 'junit:junit:4.11',
+            'org.mockito:mockito-core:1.9.5',
+            "org.springframework:spring-test:$springVersion",
+            'org.easytesting:fest-assert:1.4',
+            'com.h2database:h2:1.4.182'
+
+
+
+}

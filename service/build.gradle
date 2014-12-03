@@ -1,0 +1,18 @@
+
+dependencies {
+
+    compile project(":core"),
+            "org.springframework.security:spring-security-config:$springSecurityVersion"
+
+
+
+    testCompile 'junit:junit:4.11',
+            'org.mockito:mockito-core:1.9.5',
+            "org.springframework:spring-test:$springVersion",
+            'org.easytesting:fest-assert:1.4',
+            'com.h2database:h2:1.4.182'
+
+
+}
+
+
