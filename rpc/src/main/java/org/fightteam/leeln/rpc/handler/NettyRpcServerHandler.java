@@ -7,23 +7,34 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.fightteam.leeln.exception.RpcException;
 import org.fightteam.leeln.exception.RpcServiceException;
 import org.fightteam.leeln.exception.rpc.InvalidRpcRequestException;
 import org.fightteam.leeln.exception.rpc.NoSuchServiceException;
 import org.fightteam.leeln.exception.rpc.NoSuchServiceMethodException;
+import org.fightteam.leeln.exception.rpc.RpcAuthenticationException;
 import org.fightteam.leeln.proto.RpcProto;
 import org.fightteam.leeln.rpc.context.RpcContext;
 import org.fightteam.leeln.rpc.controller.NettyRpcController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * RPC调用处理
  * <p/>
- * 主要是发现RPC接口并注册，根据客户端请求进行对应调用。
+ * 主要是发现RPC接口并注册，根据客户端请求进行对应调用。调用交给对应的rpc上下文处理。
+ * 完成心跳监测
  *
  * @author oyach
  * @since 0.0.1
@@ -31,19 +42,46 @@ import org.springframework.stereotype.Component;
 @Component
 @ChannelHandler.Sharable
 class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequest> {
-
     private static final Logger logger = LoggerFactory.getLogger(NettyRpcServerHandler.class);
 
+    private static Map<String, Boolean> node = new HashMap<String, Boolean>();
+    private static String[] whiteList = { "127.0.0.1"};
+
+    // 注意因为是动态注册，才开始没有对象  必须是懒注入
     @Autowired
+    @Lazy
     private RpcContext rpcContext;
 
 
+
+
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, RpcProto.RpcRequest e) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, RpcProto.RpcRequest request) throws Exception {
+        System.out.println("---------服务器 接收到数据----------");
+        final RpcProto.RpcRequest rpcRequest = request;
 
-        final RpcProto.RpcRequest rpcRequest = e;
+        // 1.认证
 
+        SocketAddress socketAddress = ctx.channel().remoteAddress();
+        System.out.println("----认证----");
+        System.out.println(socketAddress.toString());
 
+        InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+
+        System.out.println(inetSocketAddress);
+        if (Arrays.asList(whiteList).contains(inetSocketAddress.getHostName())
+                || Arrays.asList(whiteList).contains(inetSocketAddress.getAddress().getHostAddress())){
+            // 白名单
+            node.put(inetSocketAddress.toString(), true);
+        }else{
+            // 进行认证
+            Boolean online = node.get(socketAddress.toString());
+            if (online == null){
+                ctx.close();
+            }
+        }
+
+        System.out.println(rpcRequest.getMethodName());
         // 阻塞 service
         if (rpcRequest.getIsBlockingService()) {
             Message response = rpcContext.callMehtodBlocking(rpcRequest);
@@ -91,20 +129,24 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info(ctx.channel().remoteAddress() + " Channel is active");
-        super.channelActive(ctx);
+
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info(ctx.channel().remoteAddress() + " Channel is disconnected");
-        super.channelInactive(ctx);
+        // 处理掉线或者注销信息
+        node.remove(ctx.channel().remoteAddress().toString());
+
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.warn(ctx.channel().remoteAddress() + " exceptionCaught", cause);
         RpcProto.RpcResponse.Builder responseBuilder = RpcProto.RpcResponse.newBuilder();
-        if (cause instanceof NoSuchServiceException) {
+        if (cause instanceof RpcAuthenticationException) {
+            responseBuilder.setErrorCode(RpcProto.ErrorCode.RPC_AUTH_ERROR);
+        } else if (cause instanceof NoSuchServiceException) {
             responseBuilder.setErrorCode(RpcProto.ErrorCode.SERVICE_NOT_FOUND);
         } else if (cause instanceof NoSuchServiceMethodException) {
             responseBuilder.setErrorCode(RpcProto.ErrorCode.METHOD_NOT_FOUND);
@@ -124,7 +166,7 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
         if (ex.getRpcRequest() != null && ex.getRpcRequest().hasId()) {
             responseBuilder.setId(ex.getRpcRequest().getId());
             responseBuilder.setErrorMessage(ex.getMessage());
-            ctx.channel().write(responseBuilder.build());
+            ctx.channel().writeAndFlush(responseBuilder.build());
         } else {
             logger.info("Cannot respond to handler exception", ex);
         }
@@ -132,6 +174,27 @@ class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcProto.RpcRequ
 
     }
 
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+
+        // 心跳处理
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            if (event.state() == IdleState.READER_IDLE) {
+                // 读超时
+                System.out.println("READER_IDLE 读超时");
+                ctx.disconnect();
+            } else if (event.state() == IdleState.WRITER_IDLE) {
+                // 写超时
+                System.out.println("WRITER_IDLE 写超时");
+            } else if (event.state() == IdleState.ALL_IDLE) {
+                // 总超时
+                System.out.println("ALL_IDLE 总超时");
+            }
+        }
+
+    }
 }
 
 

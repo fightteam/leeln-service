@@ -8,6 +8,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.fightteam.leeln.proto.RpcProto;
 import org.fightteam.leeln.rpc.factory.RpcFactory;
 import org.fightteam.leeln.rpc.handler.ProtocolInitalizer;
@@ -26,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 程序配置
@@ -134,5 +136,11 @@ public class AppConfig {
         DefaultListableBeanFactory factory = genericApplicationContext.getDefaultListableBeanFactory();
 
         return RpcFactory.getInstance(factory, "org.fightteam.leeln.provider");
+    }
+
+    @Bean
+    public IdleStateHandler idleStateHandler(){
+        // 自定义心跳规则
+        return new IdleStateHandler(5, 5, 8, TimeUnit.SECONDS);
     }
 }

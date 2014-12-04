@@ -12,6 +12,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.fightteam.leeln.proto.RpcProto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,10 +45,14 @@ public class ProtocolInitalizer extends ChannelInitializer<SocketChannel> {
     @Autowired
     private ProtobufVarint32LengthFieldPrepender protobufVarint32LengthFieldPrepender;
 
+    @Autowired
+    private IdleStateHandler idleStateHandler;
+
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
 
+        pipeline.addLast("ping", idleStateHandler);
         pipeline.addLast("frameDecoder", protobufVarint32FrameDecoder);
         pipeline.addLast("protobufDecoder", protobufDecoder);
         pipeline.addLast("frameEncoder", protobufVarint32LengthFieldPrepender);

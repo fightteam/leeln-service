@@ -59,8 +59,10 @@ public class RpcFactory {
 
         this.factory = factory;
         this.basePackage = basePackage;
-
         rpcContext = new InMemoryRpcContext();
+        // 最后吧rpccontext 注册入spring
+        factory.registerSingleton(StringUtils.uncapitalize(ClassUtils.getShortName(rpcContext.getClass())), rpcContext);
+
 
         // 使用spring的注解扫描类   让其不扫描spring的默认注解
         scanner = new ClassPathScanningCandidateComponentProvider(false);
@@ -121,20 +123,18 @@ public class RpcFactory {
 
         }
 
-        // 最后吧rpccontext 注册入spring
-        factory.registerSingleton(StringUtils.uncapitalize(ClassUtils.getShortName(rpcContext.getClass())), rpcContext);
+
 
     }
 
 
     private Service buildSerivce(Object obj, Class<? extends Service> serviceClass) throws InvocationTargetException,
             IllegalAccessException, InterfaceNotFoundException {
-        String serviceShortName = StringUtils.uncapitalize(ClassUtils.getShortName(serviceClass));
+        String serviceShortName = ClassUtils.getShortName(serviceClass);
         Class<?>[] classes = ClassUtils.getAllInterfaces(obj);
         Class<?> serviceInterface = null;
 
         for (Class clazz : classes){
-            System.out.println(ClassUtils.getShortName(clazz));
             if (ClassUtils.getShortName(clazz).equals(serviceShortName + ".Interface")){
                 serviceInterface = clazz;
             }
@@ -152,13 +152,12 @@ public class RpcFactory {
 
     private BlockingService buildBlockingSerivce(Object obj, Class<? extends Service> serviceClass) throws InvocationTargetException,
             IllegalAccessException, InterfaceNotFoundException {
-        String serviceShortName = StringUtils.uncapitalize(ClassUtils.getShortName(serviceClass));
+        String serviceShortName = ClassUtils.getShortName(serviceClass);
         Class<?>[] classes = ClassUtils.getAllInterfaces(obj);
 
         Class<?> blockingServiceInterface = null;
 
         for (Class clazz : classes){
-            System.out.println(ClassUtils.getShortName(clazz));
             if (ClassUtils.getShortName(clazz).equals(serviceShortName + ".BlockingInterface")){
                 blockingServiceInterface = clazz;
             }

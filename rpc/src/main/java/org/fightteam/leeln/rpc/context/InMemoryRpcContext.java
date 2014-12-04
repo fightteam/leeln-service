@@ -3,15 +3,13 @@ package org.fightteam.leeln.rpc.context;
 import com.google.protobuf.*;
 import org.fightteam.leeln.exception.RpcException;
 import org.fightteam.leeln.exception.RpcServiceException;
-import org.fightteam.leeln.exception.rpc.InvalidRpcRequestException;
-import org.fightteam.leeln.exception.rpc.NoRequestIdException;
-import org.fightteam.leeln.exception.rpc.NoSuchServiceException;
-import org.fightteam.leeln.exception.rpc.NoSuchServiceMethodException;
+import org.fightteam.leeln.exception.rpc.*;
 import org.fightteam.leeln.proto.RpcProto;
 import org.fightteam.leeln.rpc.context.RpcContext;
 import org.fightteam.leeln.rpc.controller.NettyRpcController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +38,7 @@ public class InMemoryRpcContext implements RpcContext {
 
     @Override
     synchronized public void registerBlockingService(BlockingService blockingService) throws IllegalArgumentException {
-        if (serviceMap.containsKey(blockingService.getDescriptorForType().getFullName())) {
+        if (blockingServiceMap.containsKey(blockingService.getDescriptorForType().getFullName())) {
             throw new IllegalArgumentException("Service already registered");
         }
         logger.debug("register blocking service:" + blockingService.getDescriptorForType().getFullName());
@@ -50,10 +48,10 @@ public class InMemoryRpcContext implements RpcContext {
 
     @Override
     synchronized public void unRegisterService(Service service) throws IllegalArgumentException {
-        if (!blockingServiceMap.containsKey(service.getDescriptorForType().getFullName())) {
+        if (!serviceMap.containsKey(service.getDescriptorForType().getFullName())) {
             throw new IllegalArgumentException("BlockingService not already registered");
         }
-        blockingServiceMap.remove(service.getDescriptorForType().getFullName());
+        serviceMap.remove(service.getDescriptorForType().getFullName());
     }
 
     @Override
@@ -69,16 +67,18 @@ public class InMemoryRpcContext implements RpcContext {
                            RpcCallback<Message> done) throws RpcException {
 
         String fullName = rpcRequest.getMethodName();
-        String methodName = fullName.substring(fullName.lastIndexOf(".") + 1);
+        String fullMethodName = fullName.indexOf(".") == 1 ? fullName.substring(1) : fullName;
 
-        String serviceName = fullName.substring(1, fullName.lastIndexOf("."));
+        String methodName = fullMethodName.substring(fullMethodName.lastIndexOf(".") + 1);
 
-        logger.info("Received request for serviceName: " + serviceName + ", method: " + methodName);
+        String fullServiceName = fullMethodName.substring(0, fullMethodName.lastIndexOf("."));
 
-        Service service = serviceMap.get(serviceName);
+        logger.info("Received request for service name: " + fullServiceName + ", method: " + methodName);
+
+        Service service = serviceMap.get(fullServiceName);
 
         if (service == null) {
-            throw new NoSuchServiceException(rpcRequest, serviceName);
+            throw new NoSuchServiceException(rpcRequest, fullServiceName);
         }
 
         if (service.getDescriptorForType().findMethodByName(methodName) == null) {
@@ -97,6 +97,8 @@ public class InMemoryRpcContext implements RpcContext {
 
         try {
             service.callMethod(methodDescriptor, controller, methodRequest, done);
+        } catch (AuthenticationCredentialsNotFoundException ex){
+            throw new RpcAuthenticationException(ex, rpcRequest, "An Authentication object was not found in the SecurityContext");
         } catch (Exception ex) {
             throw new RpcException(ex, rpcRequest, "Service threw unexpected exception");
         }
@@ -108,16 +110,18 @@ public class InMemoryRpcContext implements RpcContext {
     public Message callMehtodBlocking(RpcProto.RpcRequest rpcRequest) throws RpcException {
 
         String fullName = rpcRequest.getMethodName();
-        String methodName = fullName.substring(fullName.lastIndexOf(".") + 1);
+        String fullMethodName = fullName.indexOf(".") == 1 ? fullName.substring(1) : fullName;
 
-        String serviceName = fullName.substring(1, fullName.lastIndexOf("."));
+        String methodName = fullMethodName.substring(fullMethodName.lastIndexOf(".") + 1);
 
-        logger.info("Received request for serviceName: " + serviceName + ", method: " + methodName);
+        String fullServiceName = fullMethodName.substring(0, fullMethodName.lastIndexOf("."));
+
+        logger.info("Received request for blocking service name: " + fullServiceName + ", method: " + methodName);
 
 
-        BlockingService blockingService = blockingServiceMap.get(serviceName);
+        BlockingService blockingService = blockingServiceMap.get(fullServiceName);
         if (blockingService == null) {
-            throw new NoSuchServiceException(rpcRequest, serviceName);
+            throw new NoSuchServiceException(rpcRequest, fullServiceName);
         }
 
         if (blockingService.getDescriptorForType().findMethodByName(methodName) == null) {
@@ -144,6 +148,8 @@ public class InMemoryRpcContext implements RpcContext {
         Message methodResponse = null;
         try {
             methodResponse = blockingService.callBlockingMethod(methodDescriptor, controller, methodRequest);
+        } catch (AuthenticationCredentialsNotFoundException ex){
+            throw new RpcAuthenticationException(ex, rpcRequest, "An Authentication object was not found in the SecurityContext");
         } catch (ServiceException ex) {
             throw new RpcServiceException(ex, rpcRequest, "BlockingService RPC call threw ServiceException");
         } catch (Exception ex) {
